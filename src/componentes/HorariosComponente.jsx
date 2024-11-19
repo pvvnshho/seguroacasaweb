@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import './HorariosComponente.css'; // Importar el archivo CSS para la animación
-import furgonImg from '../furgon.png'; // Importar la imagen
+import furgonImg from '../assets/furgon.png'; // Importar la imagen
 
 const HorariosComponente = () => {
   // Obtener la fecha actual

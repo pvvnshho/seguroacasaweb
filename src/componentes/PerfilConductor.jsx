@@ -2,24 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../createClient'; // Ajusta la ruta si es necesario
 import { TextField, Button, Box, Typography, Grid } from '@mui/material';
 
-const Perfil = () => {
-  const [usuario, setUsuario] = useState({
+const PerfilConductor = () => {
+  const [conductor, setConductor] = useState({
     rut_usuario: '',
     nombre_usuario: '',
     direccion: '',
     telefono: '',
     correo_usuario: '',
     foto_usuario: '',
-    fecha_nacimiento: '', // Añadido aquí
+    fecha_vencimiento: '',
+    cod_licencia: '',
+    fecha_nacimiento: '',
   });
 
-  const [estudiante, setEstudiante] = useState({
-    rut_estudiante: '',
-    nombre_estudiante: '',
-    fecha_nacimiento: '', // Ya existía aquí
-    curso: '',
-  });
-
+  const [furgones, setFurgones] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [user, setUser] = useState(null);
   const [imageURL, setImageURL] = useState('');
@@ -33,7 +29,7 @@ const Perfil = () => {
       }
       if (data.user) {
         setUser(data.user);
-        obtenerDatosUsuario(data.user.email);
+        obtenerDatosConductor(data.user.email);  // Usamos el email para filtrar
       } else {
         window.location.href = '/login';
       }
@@ -42,65 +38,55 @@ const Perfil = () => {
     getUser();
   }, []);
 
-  const obtenerDatosUsuario = async (email) => {
+  const obtenerDatosConductor = async (email) => {
     try {
-      const { data: usuarioData, error: usuarioError } = await supabase
+      // Obtener los datos del conductor
+      const { data: conductorData, error: conductorError } = await supabase
         .from('usuarios')
         .select('*')
         .eq('correo_usuario', email)
+        .eq('tipo_usuario', 'conductor') // Aseguramos que sea conductor
         .single();
 
-      if (usuarioError) {
-        console.error('Error al obtener los datos del usuario:', usuarioError);
+      if (conductorError) {
+        console.error('Error al obtener los datos del conductor:', conductorError);
         return;
       }
 
-      setUsuario(usuarioData);
+      setConductor(conductorData);
 
-      const { data: estudianteData, error: estudianteError } = await supabase
-        .from('estudiantes')
+      // Obtener los furgones asociados al conductor
+      const { data: furgonesData, error: furgonesError } = await supabase
+        .from('furgones')
         .select('*')
-        .eq('rut_usuario', usuarioData.rut_usuario)
-        .single();
+        .eq('rut_usuario', conductorData.rut_usuario); // Filtrar por rut_usuario del conductor
 
-      if (estudianteError) {
-        console.error('Error al obtener los datos del estudiante:', estudianteError);
+      if (furgonesError) {
+        console.error('Error al obtener los furgones:', furgonesError);
         return;
       }
 
-      setEstudiante(estudianteData);
+      setFurgones(furgonesData);
     } catch (error) {
-      console.error('Error al obtener los datos del usuario y estudiante:', error);
+      console.error('Error al obtener los datos del conductor:', error);
     }
   };
 
-  const manejarCambio = (evento, tipo) => {
+  const manejarCambio = (evento) => {
     const { name, value } = evento.target;
-    if (tipo === 'usuario') {
-      setUsuario((prevState) => ({ ...prevState, [name]: value }));
-    } else {
-      setEstudiante((prevState) => ({ ...prevState, [name]: value }));
-    }
+    setConductor((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
   };
 
   const guardarDatos = async () => {
     try {
-      const { error: usuarioError } = await supabase
+      const { error: conductorError } = await supabase
         .from('usuarios')
-        .upsert([usuario], { onConflict: ['rut_usuario'] });
+        .upsert([conductor], { onConflict: ['rut_usuario'] });
 
-      if (usuarioError) throw usuarioError;
-
-      const estudianteConRut = {
-        ...estudiante,
-        rut_usuario: usuario.rut_usuario,
-      };
-
-      const { error: estudianteError } = await supabase
-        .from('estudiantes')
-        .upsert([estudianteConRut], { onConflict: ['rut_estudiante'] });
-
-      if (estudianteError) throw estudianteError;
+      if (conductorError) throw conductorError;
 
       alert('Datos actualizados exitosamente.');
       setIsEditing(false);
@@ -114,7 +100,7 @@ const Perfil = () => {
     const url = prompt("Ingresa la URL de la imagen:");
     if (url) {
       setImageURL(url);
-      setUsuario((prevState) => ({
+      setConductor((prevState) => ({
         ...prevState,
         foto_usuario: url,
       }));
@@ -122,13 +108,13 @@ const Perfil = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 600, margin: '0 auto', padding: 4, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
-      <Typography variant="h4" gutterBottom>Perfil del Usuario</Typography>
+    <Box sx={{ maxWidth: 900, margin: '0 auto', padding: 4, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+      <Typography variant="h4" gutterBottom>Perfil del Conductor</Typography>
 
       <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: 3 }}>
-        {usuario.foto_usuario && (
+        {conductor.foto_usuario && (
           <img
-            src={usuario.foto_usuario}
+            src={conductor.foto_usuario}
             alt="Foto de Perfil"
             style={{
               width: 100,
@@ -147,14 +133,14 @@ const Perfil = () => {
         </Button>
       </Box>
 
-      <Typography variant="h6" gutterBottom>Datos del Tutor</Typography>
+      <Typography variant="h6" gutterBottom>Datos del Conductor</Typography>
       <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
             label="RUT"
             name="rut_usuario"
-            value={usuario.rut_usuario || ''}
+            value={conductor.rut_usuario || ''}
             required
             disabled
           />
@@ -164,8 +150,8 @@ const Perfil = () => {
             fullWidth
             label="Nombre"
             name="nombre_usuario"
-            value={usuario.nombre_usuario || ''}
-            onChange={(e) => manejarCambio(e, 'usuario')}
+            value={conductor.nombre_usuario || ''}
+            onChange={manejarCambio}
             required
             disabled={!isEditing}
           />
@@ -175,8 +161,8 @@ const Perfil = () => {
             fullWidth
             label="Dirección"
             name="direccion"
-            value={usuario.direccion || ''}
-            onChange={(e) => manejarCambio(e, 'usuario')}
+            value={conductor.direccion || ''}
+            onChange={manejarCambio}
             required
             disabled={!isEditing}
           />
@@ -186,8 +172,8 @@ const Perfil = () => {
             fullWidth
             label="Teléfono"
             name="telefono"
-            value={usuario.telefono || ''}
-            onChange={(e) => manejarCambio(e, 'usuario')}
+            value={conductor.telefono || ''}
+            onChange={manejarCambio}
             required
             disabled={!isEditing}
           />
@@ -197,7 +183,7 @@ const Perfil = () => {
             fullWidth
             label="Correo"
             name="correo_usuario"
-            value={usuario.correo_usuario || ''}
+            value={conductor.correo_usuario || ''}
             required
             disabled
           />
@@ -207,36 +193,8 @@ const Perfil = () => {
             fullWidth
             label="Fecha de Nacimiento"
             name="fecha_nacimiento"
-            value={usuario.fecha_nacimiento || ''}
-            onChange={(e) => manejarCambio(e, 'usuario')}
-            type="date"
-            InputLabelProps={{ shrink: true }}
-            required
-            disabled={!isEditing}
-          />
-        </Grid>
-      </Grid>
-
-      <Typography variant="h6" gutterBottom>Datos del Estudiante</Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Nombre Estudiante"
-            name="nombre_estudiante"
-            value={estudiante.nombre_estudiante || ''}
-            onChange={(e) => manejarCambio(e, 'estudiante')}
-            required
-            disabled={!isEditing}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Fecha de Nacimiento"
-            name="fecha_nacimiento"
-            value={estudiante.fecha_nacimiento || ''}
-            onChange={(e) => manejarCambio(e, 'estudiante')}
+            value={conductor.fecha_nacimiento || ''}
+            onChange={manejarCambio}
             type="date"
             InputLabelProps={{ shrink: true }}
             required
@@ -246,14 +204,45 @@ const Perfil = () => {
         <Grid item xs={12}>
           <TextField
             fullWidth
-            label="Curso"
-            name="curso"
-            value={estudiante.curso || ''}
-            onChange={(e) => manejarCambio(e, 'estudiante')}
+            label="Fecha de Vencimiento Licencia"
+            name="fecha_vencimiento"
+            value={conductor.fecha_vencimiento || ''}
+            onChange={manejarCambio}
+            type="date"
+            InputLabelProps={{ shrink: true }}
             required
             disabled={!isEditing}
           />
         </Grid>
+        <Grid item xs={12}>
+          <TextField
+            fullWidth
+            label="Código de Licencia"
+            name="cod_licencia"
+            value={conductor.cod_licencia || ''}
+            onChange={manejarCambio}
+            required
+            disabled={!isEditing}
+          />
+        </Grid>
+      </Grid>
+
+      <Typography variant="h6" gutterBottom sx={{ marginTop: 3 }}>Furgones Asociados</Typography>
+      <Grid container spacing={2}>
+        {furgones.length > 0 ? (
+          furgones.map((furgon) => (
+            <Grid item xs={12} sm={6} key={furgon.matricula}>
+              <Box sx={{ padding: 2, borderRadius: 2, backgroundColor: '#fff', boxShadow: 1 }}>
+                <Typography variant="body1"><strong>Año:</strong> {furgon.año}</Typography>
+                <Typography variant="body1"><strong>Marca:</strong> {furgon.marca}</Typography>
+                <Typography variant="body1"><strong>Modelo:</strong> {furgon.modelo}</Typography>
+                <Typography variant="body1"><strong>Matrícula:</strong> {furgon.matricula}</Typography>
+              </Box>
+            </Grid>
+          ))
+        ) : (
+          <Typography variant="body1" color="textSecondary">Este conductor no tiene furgones asociados.</Typography>
+        )}
       </Grid>
 
       <Box mt={3} sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -266,12 +255,7 @@ const Perfil = () => {
             <Button variant="contained" color="primary" onClick={guardarDatos}>
               Guardar
             </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => setIsEditing(false)}
-              sx={{ marginLeft: 2 }}
-            >
+            <Button variant="outlined" color="secondary" onClick={() => setIsEditing(false)} sx={{ ml: 2 }}>
               Cancelar
             </Button>
           </>
@@ -281,4 +265,4 @@ const Perfil = () => {
   );
 };
 
-export default Perfil;
+export default PerfilConductor;

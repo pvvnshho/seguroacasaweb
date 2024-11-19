@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
-  Button,
   TextField,
   Typography,
   Paper,
@@ -9,14 +8,45 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import { supabase } from '../createClient'; // Importa tu instancia de Supabase
 
 const MensualidadComponente = () => {
-  const [monto, setMonto] = React.useState(100000); // Establecemos el monto fijo
-  const [email, setEmail] = React.useState('');
+  const [monto] = useState(55); // Monto fijo de 55 dólares
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    alert(`Pago de $${monto} realizado. Un comprobante ha sido enviado a ${email}. ¡Gracias!`);
+  const handlePayPalApprove = async (data, actions) => {
+    setIsLoading(true); // Para mostrar un indicador de carga
+
+    // Simulamos el pago al capturar la transacción
+    await actions.order.capture().then(async () => {
+      try {
+        // Guardar el pago simulado en la base de datos (Simulando un pago real)
+        const { data: paymentData, error } = await supabase
+          .from('pagos') // La tabla donde guardas los pagos
+          .insert([
+            {
+              user_email: email,
+              amount: monto,
+              status: 'Completo', // Estado del pago
+              date: new Date().toISOString(), // Fecha del pago
+            }
+          ]);
+
+        if (error) {
+          console.error("Error al guardar el pago:", error.message);
+          alert('Hubo un error al guardar el pago.');
+        } else {
+          alert(`Pago de $${monto} realizado con éxito. Un comprobante ha sido enviado a ${email}. ¡Gracias!`);
+        }
+      } catch (err) {
+        console.error('Error al simular el pago:', err);
+        alert('Hubo un problema al procesar el pago.');
+      } finally {
+        setIsLoading(false);
+      }
+    });
   };
 
   return (
@@ -27,7 +57,7 @@ const MensualidadComponente = () => {
       <Typography variant="body1" gutterBottom>
         Realiza tu pago mensual de manera rápida y segura.
       </Typography>
-      <form onSubmit={handleSubmit}>
+      <form>
         <TextField
           label="Ingrese su Gmail"
           variant="outlined"
@@ -39,26 +69,23 @@ const MensualidadComponente = () => {
           sx={{ mb: 2 }}
         />
         <Box sx={{ mb: 2, textAlign: 'center' }}>
-          <Button
-            variant="contained"
-            color="secondary"
-            sx={{
-              fontSize: '24px',
-              padding: '20px',
-              borderRadius: 4,
-              width: '100%',
-              bgcolor: '#4caf50', // Color verde
-              '&:hover': {
-                bgcolor: '#388e3c', // Color verde más oscuro al pasar el mouse
-              },
-            }}
-          >
-            Pago Mensual: ${monto}
-          </Button>
+          <Typography variant="h6">Pago Mensual: ${monto}</Typography>
         </Box>
-        <Button variant="contained" color="primary" type="submit" fullWidth>
-          Realizar Pago
-        </Button>
+        <PayPalScriptProvider options={{ "client-id": "Af12X0lH_uk9rzSAJyGNAHq46IoEb6HZKSMLqh8VW0uPvLrUieptUZp_LY7I6Q0-5YKY4VnsbhpRITZS" }}>
+          <PayPalButtons
+            style={{ layout: "vertical" }}
+            createOrder={(data, actions) => {
+              return actions.order.create({
+                purchase_units: [{
+                  amount: {
+                    value: monto.toString(),
+                  },
+                }],
+              });
+            }}
+            onApprove={handlePayPalApprove}
+          />
+        </PayPalScriptProvider>
       </form>
       <Typography variant="h6" sx={{ mt: 4 }}>
         Plan Mensual
@@ -68,7 +95,7 @@ const MensualidadComponente = () => {
           <Card sx={{ bgcolor: '#e3f2fd' }}>
             <CardContent>
               <Typography variant="h6">Plan Furgón Escolar</Typography>
-              <Typography variant="body1">$100.000</Typography>
+              <Typography variant="body1">$55 USD</Typography>
               <Typography variant="body2">Pago mensual por uso del furgón escolar.</Typography>
             </CardContent>
           </Card>

@@ -5,30 +5,30 @@ import {
   CardMedia,
   Typography,
   Card,
-  Button,
   IconButton,
 } from '@mui/material';
 import MapIcon from '@mui/icons-material/Map';
-import RssFeedRoundedIcon from '@mui/icons-material/RssFeedRounded';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import InstagramIcon from '@mui/icons-material/Instagram';
 
 const cardData = [
   {
-    img: 'url_to_image1.jpg',
+    img: 'https://praesidiumchile.cl/wp-content/uploads/2023/03/una-furgoneta-amarilla-de-la-escuela.jpg_s1024x1024wisk20cczyKal9y_d-eEucJzWBSd1sz2FfrVFp1wupZOpwZGrA.jpg',
     tag: 'Transporte Seguro',
     title: 'Furgones Escolares',
     description: 'Furgones equipados con GPS para un seguimiento seguro.',
     authors: 'Autor 1',
   },
   {
-    img: 'url_to_image2.jpg',
+    img: 'https://i.blogs.es/c4a783/huawei-watch-4-pro/1366_2000.webp',
     tag: 'Horarios',
     title: 'Horarios de Recolección',
     description: 'Consulta los horarios de recolección de los estudiantes.',
     authors: 'Autor 2',
   },
   {
-    img: 'url_to_image3.jpg',
+    img: 'https://media.licdn.com/dms/image/v2/D4E12AQHA_yKISm6b3A/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1689869483659?e=1737590400&v=beta&t=zvQ7HI35YPibaa1xDAc6_5VqUKpa5TOjOwZxPnXklLs',
     tag: 'Contacta',
     title: 'Soporte al Cliente',
     description: 'Estamos aquí para ayudarte con cualquier consulta.',
@@ -48,7 +48,13 @@ const HomeComponente = () => {
         {cardData.map((card, index) => (
           <Grid item xs={12} md={4} key={index}>
             <Card variant="outlined">
-              <CardMedia component="img" alt={card.title} image={card.img} />
+              {/* La imagen se adapta automáticamente al recuadro de la tarjeta */}
+              <CardMedia
+                component="img"
+                alt={card.title}
+                image={card.img}
+                sx={{ objectFit: 'cover', height: '100%' }} // Ajuste automático de la imagen
+              />
               <Box sx={{ padding: 2 }}>
                 <Typography variant="caption" component="div">{card.tag}</Typography>
                 <Typography variant="h6" component="div">{card.title}</Typography>
@@ -71,14 +77,14 @@ const HomeComponente = () => {
       <Box sx={{ marginTop: 4 }}>
         <Typography variant="h6">Redes Sociales</Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 1 }}>
-          <IconButton aria-label="Facebook">
-            <img src="path_to_facebook_icon.png" alt="Facebook" />
+          <IconButton aria-label="Facebook" href="https://www.facebook.com" target="_blank">
+            <FacebookIcon sx={{ fontSize: 40 }} />
           </IconButton>
-          <IconButton aria-label="Twitter">
-            <img src="path_to_twitter_icon.png" alt="Twitter" />
+          <IconButton aria-label="Twitter" href="https://www.twitter.com" target="_blank">
+            <TwitterIcon sx={{ fontSize: 40 }} />
           </IconButton>
-          <IconButton aria-label="Instagram">
-            <img src="path_to_instagram_icon.png" alt="Instagram" />
+          <IconButton aria-label="Instagram" href="https://www.instagram.com" target="_blank">
+            <InstagramIcon sx={{ fontSize: 40 }} />
           </IconButton>
         </Box>
       </Box>

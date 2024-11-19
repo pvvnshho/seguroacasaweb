@@ -1,47 +1,69 @@
-// App.js
 import React, { useState } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
-import Component from './componentes/Component';
-import MyButton from './componentes/MyButton';
-import Typography from '@mui/material/Typography';
-import SizeAvatars from './componentes/SizeAvatars';
-import Stack from '@mui/material/Stack';
-import Login from './login'; // Ruta corregida si es necesario
-import Registro from './registro'; // Ruta corregida si es necesario
-import Perfil from './perfil'; // Ruta corregida si es necesario
-import Mensualidad from './mensualidad';
-import Ruta from './ruta';
-import Conductor from './conductor';
-import Horarios from './horarios';
-import Home from './home'; 
-import Inicio from './inicio'; // Ruta correcta para Inicio
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import Login from '../src/page/loginComprobacion';
+import Registro from '../src/page/registro';
+import Perfil from '../src/page/perfil';
+import Mensualidad from '../src/page/mensualidad';
+import Ruta from '../src/page/ruta';
+import Formulario from '../src/page/formulario';
+import Conductor from '../src/page/conductor';
+import Horarios from '../src/page/horarios';
+import AdminPage from '../src/page/admin';
+
+import Home from '../src/page/home';
+import Estudiantes from '../src/page/estudiantes';
+import GestionPagosPage from './page/gestionPagos';
+import Furgones from '../src/page/furgones';
+import PerfilConductor from '../src/page/perfilConductor';
+import Inicio from '../src/page/inicio';
+import FormularioPerfil from './componentes/FormularioComponente';
+
+
+import GestionFurgones from '../src/page/gestionFurgones';
+import GestionConfig from '../src/page/gestionConfig';
+
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-// Crea un tema
 const theme = createTheme({
   palette: {
-    mode: 'dark', // Cambia a 'light' si prefieres
+    mode: 'dark',
   },
 });
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Simulación de autenticación
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogin = (status) => {
+    setIsLoggedIn(status);
+    if (status) {
+      navigate('/home');
+    }
+  };
 
   return (
-    <ThemeProvider theme={theme}> {/* Envuelve la aplicación en ThemeProvider */}
+    <ThemeProvider theme={theme}>
       <div>
         <Routes>
-          {/* Redirigir al componente Inicio si no está autenticado */}
-          <Route path="/" element={isLoggedIn ? <Home /> : <Inicio />} />
-          
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Inicio />} />
+          <Route path="/login" element={<Login handleLogin={handleLogin} />} />
           <Route path="/registro" element={<Registro />} />
           <Route path="/perfil" element={<Perfil />} />
           <Route path="/mensualidad" element={<Mensualidad />} />
           <Route path="/ruta" element={<Ruta />} />
           <Route path="/conductor" element={<Conductor />} />
           <Route path="/horarios" element={<Horarios />} />
+          <Route path="/furgones" element={<Furgones />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/perfilConductor" element={<PerfilConductor />} />
+          <Route path="/estudiantes" element={<Estudiantes />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/formulario" element={<Formulario />} />
+          <Route path="/formularioPerfil" element={<FormularioPerfil />} />
+          <Route path="/gestionPagos" element={<GestionPagosPage />} />
+
+          <Route path="/gestionFurgones" element={<GestionFurgones />} />
+          <Route path="/gestionConfig" element={<GestionConfig />} />
         </Routes>
       </div>
     </ThemeProvider>
@@ -49,8 +71,4 @@ function App() {
 }
 
 export default App;
-
-
-
-
 
