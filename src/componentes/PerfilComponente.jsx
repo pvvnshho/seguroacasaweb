@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../createClient'; // Ajusta la ruta si es necesario
-import { TextField, Button, Box, Typography, Grid } from '@mui/material';
+import { TextField, Button, Box, Typography, Grid, List, ListItem, ListItemText } from '@mui/material';
 
 const Perfil = () => {
   const [usuario, setUsuario] = useState({
@@ -20,6 +20,7 @@ const Perfil = () => {
     curso: '',
   });
 
+  const [estudiantesList, setEstudiantesList] = useState([]); // Lista para mostrar estudiantes
   const [isEditing, setIsEditing] = useState(false);
   const [user, setUser] = useState(null);
   const [imageURL, setImageURL] = useState('');
@@ -57,18 +58,24 @@ const Perfil = () => {
 
       setUsuario(usuarioData);
 
+      // Intentamos obtener el estudiante solo si existe un rut_usuario en la tabla estudiantes
       const { data: estudianteData, error: estudianteError } = await supabase
         .from('estudiantes')
         .select('*')
-        .eq('rut_usuario', usuarioData.rut_usuario)
-        .single();
+        .eq('rut_usuario', usuarioData.rut_usuario);
 
       if (estudianteError) {
         console.error('Error al obtener los datos del estudiante:', estudianteError);
         return;
       }
 
-      setEstudiante(estudianteData);
+      if (estudianteData.length > 0) {
+        setEstudiante(estudianteData[0]);
+        setEstudiantesList(estudianteData); // Guardar la lista de estudiantes
+      } else {
+        setEstudiante({}); // Si no hay datos, limpiamos el estado de estudiante
+        setEstudiantesList([]); // Y limpiamos la lista
+      }
     } catch (error) {
       console.error('Error al obtener los datos del usuario y estudiante:', error);
     }
@@ -222,6 +229,17 @@ const Perfil = () => {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            label="RUT Estudiante"
+            name="rut_estudiante"
+            value={estudiante.rut_estudiante || ''}
+            onChange={(e) => manejarCambio(e, 'estudiante')}
+            required
+            disabled={!isEditing}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
             label="Nombre Estudiante"
             name="nombre_estudiante"
             value={estudiante.nombre_estudiante || ''}
@@ -233,7 +251,7 @@ const Perfil = () => {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Fecha de Nacimiento"
+            label="Fecha de Nacimiento Estudiante"
             name="fecha_nacimiento"
             value={estudiante.fecha_nacimiento || ''}
             onChange={(e) => manejarCambio(e, 'estudiante')}
@@ -256,27 +274,28 @@ const Perfil = () => {
         </Grid>
       </Grid>
 
-      <Box mt={3} sx={{ display: 'flex', justifyContent: 'center' }}>
-        {!isEditing ? (
-          <Button variant="contained" color="primary" onClick={() => setIsEditing(true)}>
-            Editar Datos
+      {isEditing && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: 3 }}>
+          <Button variant="contained" color="primary" onClick={guardarDatos}>
+            Guardar Cambios
           </Button>
-        ) : (
-          <>
-            <Button variant="contained" color="primary" onClick={guardarDatos}>
-              Guardar
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => setIsEditing(false)}
-              sx={{ marginLeft: 2 }}
-            >
-              Cancelar
-            </Button>
-          </>
-        )}
+        </Box>
+      )}
+
+      <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: 3 }}>
+        <Button variant="outlined" color="primary" onClick={() => setIsEditing(!isEditing)}>
+          {isEditing ? 'Cancelar' : 'Editar'}
+        </Button>
       </Box>
+
+      <Typography variant="h6" gutterBottom sx={{ marginTop: 3 }}>Estudiantes Asociados</Typography>
+      <List>
+        {estudiantesList.map((student) => (
+          <ListItem key={student.rut_estudiante}>
+            <ListItemText primary={`${student.nombre_estudiante} - ${student.curso}`} />
+          </ListItem>
+        ))}
+      </List>
     </Box>
   );
 };

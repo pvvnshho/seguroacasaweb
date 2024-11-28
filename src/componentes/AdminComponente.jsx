@@ -5,6 +5,7 @@ import { supabase } from '../createClient';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import CommuteIcon from '@mui/icons-material/Commute'; // Icono para furgón
 
 const AdminComponente = () => {
   const [users, setUsers] = useState([]);
@@ -100,6 +101,15 @@ const AdminComponente = () => {
           onClick={() => navigate('/registro')}
         >
           Agregar Usuario
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary" // Color diferente para el botón de furgones
+          sx={{ marginRight: 2 }}
+          startIcon={<CommuteIcon />}
+          onClick={() => navigate('/registrarFurgon')} // Redirige a la página de registro de furgones
+        >
+          Agregar Furgón
         </Button>
         <Button
           variant="outlined"

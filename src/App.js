@@ -17,7 +17,7 @@ import Furgones from '../src/page/furgones';
 import PerfilConductor from '../src/page/perfilConductor';
 import Inicio from '../src/page/inicio';
 import FormularioPerfil from './componentes/FormularioComponente';
-
+import RegistrarFurgon from './page/registrarFurgon';
 
 import GestionFurgones from '../src/page/gestionFurgones';
 import GestionConfig from '../src/page/gestionConfig';
@@ -58,10 +58,10 @@ function App() {
           <Route path="/perfilConductor" element={<PerfilConductor />} />
           <Route path="/estudiantes" element={<Estudiantes />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/registrarFurgon" element={<RegistrarFurgon />} />
           <Route path="/formulario" element={<Formulario />} />
           <Route path="/formularioPerfil" element={<FormularioPerfil />} />
           <Route path="/gestionPagos" element={<GestionPagosPage />} />
-
           <Route path="/gestionFurgones" element={<GestionFurgones />} />
           <Route path="/gestionConfig" element={<GestionConfig />} />
         </Routes>

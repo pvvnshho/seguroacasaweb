@@ -1,129 +1,319 @@
-import * as React from 'react';
-import { Box, TextField, Button, Typography, FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
+import React, { useState } from 'react';
 import { supabase } from '../createClient';
+import { useNavigate } from 'react-router-dom';
 
-const RegistroComponente = () => {
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [confirmPassword, setConfirmPassword] = React.useState('');
-  const [userType, setUserType] = React.useState('usuario'); // Opciones: 'usuario' o 'conductor'
-  const [error, setError] = React.useState(null);
+const LoginComprobacion = () => {
+  const navigate = useNavigate(); // Hook para redirigir
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [rut, setRut] = useState('');
+  const [tipoUsuario, setTipoUsuario] = useState('usuario'); // Por defecto, tipo usuario es 'usuario'
+  const [nombre, setNombre] = useState('');
+  const [direccion, setDireccion] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [foto, setFoto] = useState('');
+  const [fechaNacimiento, setFechaNacimiento] = useState('');
+  const [fechaVencimiento, setFechaVencimiento] = useState('');
+  const [codLicencia, setCodLicencia] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isLogin, setIsLogin] = useState(false); // Para alternar entre login y registro
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setError(null);
-
-    // Validar que las contraseñas coincidan
+  const handleRegister = async () => {
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden');
+      setMessage('Las contraseñas no coinciden.');
       return;
     }
 
+    if (tipoUsuario === 'admin') {
+      setMessage('No puedes registrar un usuario como admin desde este formulario.');
+      return;
+    }
+
+    setLoading(true);
+    setMessage('');
+
     try {
-      // Crear el usuario en Supabase
-      const { data, error } = await supabase.auth.signUp({
+      // Primero, intentamos registrar el usuario con email y contraseña
+      const { error } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        setMessage(`Error al registrar: ${error.message}`);
+      } else {
+        // Si el registro es exitoso, guardamos los datos adicionales
+        const { error: insertError } = await supabase
+          .from('usuarios') // Tabla donde guardamos los usuarios
+          .insert([{
+            rut_usuario: rut,
+            tipo_usuario: tipoUsuario,
+            correo_usuario: email,
+            nombre_usuario: nombre,
+            direccion: direccion,
+            telefono: telefono,
+            foto_usuario: foto,
+            fecha_nacimiento: fechaNacimiento,
+            fecha_vencimiento: tipoUsuario === 'conductor' ? fechaVencimiento : null,
+            cod_licencia: tipoUsuario === 'conductor' ? codLicencia : null,
+          }]);
 
-      // Si el registro es exitoso, guarda el tipo de usuario en la base de datos
-      const { error: insertError } = await supabase
-        .from('users') // Asegúrate de que esta tabla existe y contiene el campo `user_type`
-        .insert([{ email, user_type: userType }]);
-
-      if (insertError) throw insertError;
-
-      alert('Registro exitoso, verifica tu correo para confirmar tu cuenta.');
+        if (insertError) {
+          setMessage(`Error al registrar los datos adicionales: ${insertError.message}`);
+        } else {
+          setMessage('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.');
+          // Siempre redirigir a la página de admin después de registrar
+          navigate('/admin');
+        }
+      }
     } catch (error) {
-      setError(error.message);
+      setMessage(`Hubo un error al registrar: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setMessage(`Error al iniciar sesión: ${error.message}`);
+      } else {
+        // Aquí obtenemos el tipo de usuario desde la tabla 'usuarios' después de iniciar sesión
+        const { data: userData, error: userError } = await supabase
+          .from('usuarios')
+          .select('tipo_usuario') // Obtenemos el tipo de usuario
+          .eq('correo_usuario', email) // Filtramos por el correo del usuario
+          .single(); // Nos aseguramos de obtener solo un resultado
+
+        if (userError) {
+          setMessage(`Error al obtener el tipo de usuario: ${userError.message}`);
+        } else {
+          // Redirección según el tipo de usuario
+          if (userData.tipo_usuario === 'conductor') {
+            navigate('/perfilConductor'); // Redirigimos a la página de conductor.js
+          } else if (userData.tipo_usuario === 'admin') {
+            navigate('/admin'); // Redirigimos a la página de admin.js
+          } else {
+            navigate('/home'); // Redirigimos a la página de home.js
+          }
+        }
+      }
+    } catch (error) {
+      setMessage(`Hubo un error al iniciar sesión: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box sx={{ textAlign: 'center', minHeight: '100vh', bgcolor: 'white', p: 2 }}>
-      <Typography variant="h5" gutterBottom>
-        Registro
-      </Typography>
+    <div style={styles.container}>
+      <h2>{isLogin ? 'Iniciar sesión' : 'Registro'}</h2>
 
-      <Box
-        sx={{
-          width: '100%',
-          maxWidth: '600px',
-          mx: 'auto',
-          p: 3,
-          bgcolor: '#1e1e1e',  // Fondo del formulario en negro
-          boxShadow: 3,         // Sombra para darle un toque elegante
-          borderRadius: 2,
-        }}
-      >
-        {error && <Typography sx={{ color: 'red', mb: 2 }}>{error}</Typography>}
+      {message && <p style={styles.message}>{message}</p>}
 
-        <TextField
-          label="Correo Electrónico"
-          variant="outlined"
-          fullWidth
-          sx={{ mb: 2, bgcolor: '#333', '& .MuiInputLabel-root': { color: 'white' }, '& .MuiOutlinedInput-root': { color: 'white' }}}
+      <div>
+        <label>Correo electrónico</label>
+        <input
+          type="email"
+          placeholder="Correo electrónico"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
+          style={styles.input}
         />
+      </div>
 
-        <TextField
-          label="Contraseña"
-          variant="outlined"
-          fullWidth
-          sx={{ mb: 2, bgcolor: '#333', '& .MuiInputLabel-root': { color: 'white' }, '& .MuiOutlinedInput-root': { color: 'white' }}}
+      <div>
+        <label>Contraseña</label>
+        <input
+          type="password"
+          placeholder="Contraseña"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
-          type="password"
+          style={styles.input}
         />
+      </div>
 
-        <TextField
-          label="Confirmar Contraseña"
-          variant="outlined"
-          fullWidth
-          sx={{ mb: 2, bgcolor: '#333', '& .MuiInputLabel-root': { color: 'white' }, '& .MuiOutlinedInput-root': { color: 'white' }}}
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          type="password"
-        />
+      {!isLogin && (
+        <>
+          <div>
+            <label>Confirmar contraseña</label>
+            <input
+              type="password"
+              placeholder="Confirmar contraseña"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              style={styles.input}
+            />
+          </div>
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel sx={{ color: 'white' }}>Tipo de Usuario</InputLabel>
-          <Select
-            value={userType}
-            onChange={(e) => setUserType(e.target.value)}
-            sx={{
-              backgroundColor: '#333',
-              color: 'white',
-              '.MuiOutlinedInput-notchedOutline': {
-                borderColor: 'white',
-              },
-            }}
-            required
-          >
-            <MenuItem value="usuario">Usuario</MenuItem>
-            <MenuItem value="conductor">Conductor</MenuItem>
-          </Select>
-          <FormHelperText sx={{ color: 'white' }}>Selecciona el tipo de usuario</FormHelperText>
-        </FormControl>
+          <div>
+            <label>RUT</label>
+            <input
+              type="text"
+              placeholder="RUT"
+              value={rut}
+              onChange={(e) => setRut(e.target.value)}
+              style={styles.input}
+            />
+          </div>
 
-        <Button
-          variant="contained"
-          color="primary"
-          fullWidth
-          sx={{ mb: 2 }}
-          onClick={handleRegister}
-        >
-          Registrar
-        </Button>
-      </Box>
-    </Box>
+          <div>
+            <label>Tipo de usuario</label>
+            <select
+              value={tipoUsuario}
+              onChange={(e) => setTipoUsuario(e.target.value)}
+              style={styles.input}
+            >
+              <option value="usuario">Usuario</option>
+              <option value="conductor">Conductor</option>
+              {/* No se incluye opción para registrar admin */}
+            </select>
+          </div>
+
+          <div>
+            <label>Nombre</label>
+            <input
+              type="text"
+              placeholder="Nombre completo"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              style={styles.input}
+            />
+          </div>
+
+          <div>
+            <label>Dirección</label>
+            <input
+              type="text"
+              placeholder="Dirección"
+              value={direccion}
+              onChange={(e) => setDireccion(e.target.value)}
+              style={styles.input}
+            />
+          </div>
+
+          <div>
+            <label>Teléfono</label>
+            <input
+              type="text"
+              placeholder="Teléfono"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              style={styles.input}
+            />
+          </div>
+
+          <div>
+            <label>Foto</label>
+            <input
+              type="text"
+              placeholder="Foto (URL)"
+              value={foto}
+              onChange={(e) => setFoto(e.target.value)}
+              style={styles.input}
+            />
+          </div>
+
+          <div>
+            <label>Fecha de nacimiento</label>
+            <input
+              type="date"
+              value={fechaNacimiento}
+              onChange={(e) => setFechaNacimiento(e.target.value)}
+              style={styles.input}
+            />
+          </div>
+
+          {tipoUsuario === 'conductor' && (
+            <>
+              <div>
+                <label>Fecha de vencimiento</label>
+                <input
+                  type="date"
+                  value={fechaVencimiento}
+                  onChange={(e) => setFechaVencimiento(e.target.value)}
+                  style={styles.input}
+                />
+              </div>
+
+              <div>
+                <label>Código de licencia</label>
+                <input
+                  type="text"
+                  placeholder="Código de licencia"
+                  value={codLicencia}
+                  onChange={(e) => setCodLicencia(e.target.value)}
+                  style={styles.input}
+                />
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      <button
+        onClick={isLogin ? handleLogin : handleRegister}
+        disabled={loading}
+        style={styles.button}
+      >
+        {loading ? 'Cargando...' : isLogin ? 'Iniciar sesión' : 'Registrarse'}
+      </button>
+
+
+
+    </div>
   );
 };
 
-export default RegistroComponente;
+const styles = {
+  container: {
+    maxWidth: '400px',
+    margin: 'auto',
+    padding: '20px',
+    backgroundColor: '#fff',
+    borderRadius: '8px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+  },
+  input: {
+    width: '100%',
+    padding: '10px',
+    marginBottom: '10px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+  },
+  button: {
+    width: '100%',
+    padding: '10px',
+    backgroundColor: '#4CAF50',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '16px',
+  },
+  message: {
+    color: 'red',
+    fontSize: '14px',
+    marginBottom: '10px',
+  },
+  switchText: {
+    textAlign: 'center',
+    fontSize: '14px',
+  },
+  switchLink: {
+    color: '#007BFF',
+    cursor: 'pointer',
+  },
+};
+
+export default LoginComprobacion;
