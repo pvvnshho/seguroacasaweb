@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import DescriptionIcon from '@mui/icons-material/Description';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import RouteIcon from '@mui/icons-material/Route';
 import CommuteIcon from '@mui/icons-material/Commute';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import HomeIcon from '@mui/icons-material/Home';
@@ -111,12 +110,7 @@ function DashboardLayoutNavigationLinks(props) {
             icon: <DescriptionIcon sx={{ fontSize: 40 }} />, // Tamaño del icono ajustado
             onClick: () => navigate('/mensualidad'),
           },
-          {
-            segment: 'ruta',
-            title: <span style={{ fontSize: '18px' }}>Ruta</span>,
-            icon: <RouteIcon sx={{ fontSize: 40 }} />, // Tamaño del icono ajustado
-            onClick: () => navigate('/ruta'),
-          },
+
           {
             segment: 'conductor',
             title: <span style={{ fontSize: '18px' }}>Conductores</span>,

@@ -1,3 +1,4 @@
+// Importa las dependencias necesarias
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -15,26 +16,53 @@ import { supabase } from '../createClient'; // Asegúrate de que Supabase esté 
 
 const ConfigComponente = () => {
   const [usuarios, setUsuarios] = useState([]);
+  const [estudiantes, setEstudiantes] = useState([]);
+  const [furgones, setFurgones] = useState([]);
   const [editedUsuarios, setEditedUsuarios] = useState({}); // Estado para los cambios temporales
 
-  // Cargar usuarios desde la base de datos
+  // Cargar usuarios, estudiantes y furgones desde la base de datos
   useEffect(() => {
-    const fetchUsers = async () => {
-      const { data, error } = await supabase
+    const fetchData = async () => {
+      // Obtener usuarios
+      const { data: usuariosData, error: usuariosError } = await supabase
         .from('usuarios')
         .select(
           'rut_usuario, nombre_usuario, direccion, telefono, correo_usuario, foto_usuario, fecha_nacimiento, tipo_usuario, created_at'
         ) // Incluimos created_at
         .order('created_at', { ascending: false }); // Ordenamos de más nuevos a más antiguos
 
-      if (error) {
-        console.error('Error al cargar usuarios:', error.message);
+      if (usuariosError) {
+        console.error('Error al cargar usuarios:', usuariosError.message);
       } else {
-        setUsuarios(data);
+        setUsuarios(usuariosData);
+      }
+
+      // Obtener estudiantes
+      const { data: estudiantesData, error: estudiantesError } = await supabase
+        .from('estudiantes')
+        .select('rut_estudiante, nombre_estudiante, fecha_nacimiento, curso, rut_usuario')
+        .order('nombre_estudiante', { ascending: true });
+
+      if (estudiantesError) {
+        console.error('Error al cargar estudiantes:', estudiantesError.message);
+      } else {
+        setEstudiantes(estudiantesData);
+      }
+
+      // Obtener furgones
+      const { data: furgonesData, error: furgonesError } = await supabase
+        .from('furgones')
+        .select('matricula, marca, modelo, año, rut_usuario, foto_furgon, nombre_auxiliar, rut_auxiliar, telefono_auxiliar, foto_auxiliar, capacidad')
+        .order('matricula', { ascending: true });
+
+      if (furgonesError) {
+        console.error('Error al cargar furgones:', furgonesError.message);
+      } else {
+        setFurgones(furgonesData);
       }
     };
 
-    fetchUsers();
+    fetchData();
   }, []);
 
   // Manejar cambios en el tipo de usuario temporalmente
@@ -76,7 +104,7 @@ const ConfigComponente = () => {
   const deleteUser = async (rutUsuario, correoUsuario) => {
     try {
       // 1. Eliminar de Supabase Auth
-      const { error: authError } = await supabase.auth.admin.deleteUserByEmail(correoUsuario);
+      const { error: authError } = await supabase.auth.admin.deleteUser(correoUsuario); // Método corregido
       if (authError) {
         console.error('Error al eliminar usuario de Auth:', authError.message);
         alert(`No se pudo eliminar de la autenticación: ${authError.message}`);
@@ -101,6 +129,53 @@ const ConfigComponente = () => {
     } catch (error) {
       console.error('Error general al eliminar usuario:', error);
       alert('Hubo un problema al eliminar el usuario.');
+    }
+  };
+
+  // Eliminar un estudiante
+  const deleteEstudiante = async (rutEstudiante) => {
+    try {
+      // Eliminar de la tabla `estudiantes`
+      const { error } = await supabase
+        .from('estudiantes')
+        .delete()
+        .eq('rut_estudiante', rutEstudiante);
+
+      if (error) {
+        console.error('Error al eliminar estudiante:', error.message);
+        alert('No se pudo eliminar el estudiante.');
+        return;
+      }
+
+      // Actualizar el estado de los estudiantes
+      setEstudiantes((prevState) => prevState.filter((estudiante) => estudiante.rut_estudiante !== rutEstudiante));
+      alert('Estudiante eliminado correctamente.');
+    } catch (error) {
+      console.error('Error al eliminar estudiante:', error);
+      alert('Hubo un problema al eliminar el estudiante.');
+    }
+  };
+
+  // Eliminar un furgón
+  const deleteFurgon = async (matricula) => {
+    try {
+      const { error } = await supabase
+        .from('furgones')
+        .delete()
+        .eq('matricula', matricula);
+
+      if (error) {
+        console.error('Error al eliminar furgón:', error.message);
+        alert('No se pudo eliminar el furgón.');
+        return;
+      }
+
+      // Actualizar el estado de los furgones
+      setFurgones((prevState) => prevState.filter((furgon) => furgon.matricula !== matricula));
+      alert('Furgón eliminado correctamente.');
+    } catch (error) {
+      console.error('Error al eliminar furgón:', error);
+      alert('Hubo un problema al eliminar el furgón.');
     }
   };
 
@@ -142,6 +217,48 @@ const ConfigComponente = () => {
               variant="contained"
               color="secondary"
               onClick={() => deleteUser(usuario.rut_usuario, usuario.correo_usuario)}
+            >
+              Eliminar
+            </Button>
+          </ListItem>
+        ))}
+      </List>
+
+      <Typography variant="h5" gutterBottom>
+        Estudiantes
+      </Typography>
+      <List>
+        {estudiantes.map((estudiante) => (
+          <ListItem key={estudiante.rut_estudiante}>
+            <ListItemText
+              primary={estudiante.nombre_estudiante}
+              secondary={`Curso: ${estudiante.curso} | RUT: ${estudiante.rut_estudiante}`}
+            />
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => deleteEstudiante(estudiante.rut_estudiante)}
+            >
+              Eliminar
+            </Button>
+          </ListItem>
+        ))}
+      </List>
+
+      <Typography variant="h5" gutterBottom>
+        Furgones
+      </Typography>
+      <List>
+        {furgones.map((furgon) => (
+          <ListItem key={furgon.matricula}>
+            <ListItemText
+              primary={`${furgon.matricula} - ${furgon.marca} ${furgon.modelo}`}
+              secondary={`Año: ${furgon.año} | Capacidad: ${furgon.capacidad}`}
+            />
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => deleteFurgon(furgon.matricula)}
             >
               Eliminar
             </Button>

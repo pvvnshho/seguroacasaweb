@@ -79,12 +79,7 @@ function DashboardLayoutNavigationLinks(props) {
             icon: <DescriptionIcon sx={{ fontSize: 40 }} />, // Icono de Mensualidad
             onClick: () => navigate('/mensualidad'),
           },
-          {
-            segment: 'ruta',
-            title: <span style={{ fontSize: '18px' }}>Ruta</span>,
-            icon: <RouteIcon sx={{ fontSize: 40 }} />, // Icono de Ruta
-            onClick: () => navigate('/ruta'),
-          },
+
           {
             segment: 'conductor',
             title: <span style={{ fontSize: '18px' }}>Conductores</span>,

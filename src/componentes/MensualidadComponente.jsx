@@ -1,53 +1,106 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  TextField,
-  Typography,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
-} from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, TextField, Typography, Paper, CircularProgress } from '@mui/material';
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
-import { supabase } from '../createClient'; // Importa tu instancia de Supabase
+import { supabase } from '../createClient';
 
 const MensualidadComponente = () => {
   const [monto] = useState(55); // Monto fijo de 55 dólares
-  const [email, setEmail] = useState('');
+  const [correoUsuario, setCorreoUsuario] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSessionLoaded, setIsSessionLoaded] = useState(false);
+
+  useEffect(() => {
+    const getUsuarioLogueado = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error al obtener la sesión:", error);
+      } else if (session && session.user) {
+        setCorreoUsuario(session.user.email);
+      } else {
+        console.error("No hay sesión activa.");
+      }
+      setIsSessionLoaded(true);
+    };
+
+    getUsuarioLogueado();
+  }, []);
 
   const handlePayPalApprove = async (data, actions) => {
-    setIsLoading(true); // Para mostrar un indicador de carga
+    if (!isSessionLoaded) {
+      alert("Cargando la sesión...");
+      return;
+    }
 
-    // Simulamos el pago al capturar la transacción
+    setIsLoading(true);
+
     await actions.order.capture().then(async () => {
       try {
-        // Guardar el pago simulado en la base de datos (Simulando un pago real)
-        const { data: paymentData, error } = await supabase
-          .from('pagos') // La tabla donde guardas los pagos
-          .insert([
-            {
-              user_email: email,
-              amount: monto,
-              status: 'Completo', // Estado del pago
-              date: new Date().toISOString(), // Fecha del pago
-            }
-          ]);
+        const trimmedCorreo = correoUsuario.trim();
 
-        if (error) {
-          console.error("Error al guardar el pago:", error.message);
-          alert('Hubo un error al guardar el pago.');
+        if (!trimmedCorreo) {
+          alert("El correo ingresado está vacío. Por favor, verifica.");
+          setIsLoading(false);
+          return;
+        }
+
+        // Buscar usuario en la tabla 'usuarios' por correo
+        const { data: usuarioData, error: usuarioError } = await supabase
+          .from('usuarios')
+          .select('*')
+          .eq('correo_usuario', trimmedCorreo)
+          .maybeSingle();
+
+        if (usuarioError) {
+          console.error('Error al buscar usuario:', usuarioError);
+          alert('Error al buscar usuario. Verifica el correo.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (!usuarioData) {
+          alert('Usuario no encontrado. Verifica el correo.');
+          setIsLoading(false);
+          return;
+        }
+
+        const rutUsuario = usuarioData.rut_usuario;
+        const nombreUsuario = usuarioData.nombre_usuario;
+
+        // Crear registro en 'pagos' con el rut_usuario
+        const { data: pagoData, error: pagoError } = await supabase
+          .from('pagos')
+          .insert([{
+            monto: monto,
+            fecha_pago: new Date().toISOString(),
+            estado_pago: 'Completo',
+            metodo_pago: 'PayPal',
+            descripcion: 'Pago mensual',
+            rut_usuario: rutUsuario,  // Rut del usuario
+          }])
+          .single();
+
+        if (pagoError) {
+          console.error("Error al registrar el pago:", pagoError);
+          alert('Error al registrar el pago.');
         } else {
-          alert(`Pago de $${monto} realizado con éxito. Un comprobante ha sido enviado a ${email}. ¡Gracias!`);
+          alert(`Pago registrado exitosamente para ${nombreUsuario} (${trimmedCorreo}).`);
         }
       } catch (err) {
-        console.error('Error al simular el pago:', err);
-        alert('Hubo un problema al procesar el pago.');
+        console.error('Error al procesar el pago:', err);
+        alert('Ocurrió un problema al procesar el pago.');
       } finally {
         setIsLoading(false);
       }
     });
   };
+
+  if (!isSessionLoaded) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Paper sx={{ p: 4, maxWidth: 600, margin: '0 auto', borderRadius: 3 }}>
@@ -59,12 +112,13 @@ const MensualidadComponente = () => {
       </Typography>
       <form>
         <TextField
-          label="Ingrese su Gmail"
+          label="Correo del usuario"
           variant="outlined"
           fullWidth
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={correoUsuario}
+          InputProps={{
+            readOnly: true,
+          }}
           required
           sx={{ mb: 2 }}
         />
@@ -87,25 +141,6 @@ const MensualidadComponente = () => {
           />
         </PayPalScriptProvider>
       </form>
-      <Typography variant="h6" sx={{ mt: 4 }}>
-        Plan Mensual
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Card sx={{ bgcolor: '#e3f2fd' }}>
-            <CardContent>
-              <Typography variant="h6">Plan Furgón Escolar</Typography>
-              <Typography variant="body1">$55 USD</Typography>
-              <Typography variant="body2">Pago mensual por uso del furgón escolar.</Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-      <Box sx={{ textAlign: 'center', mt: 4 }}>
-        <Typography variant="body2" color="text.secondary">
-          Todos los pagos son seguros y procesados con tecnología de encriptación.
-        </Typography>
-      </Box>
     </Paper>
   );
 };

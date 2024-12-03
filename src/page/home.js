@@ -34,11 +34,7 @@ const NAVIGATION = [
     title: <span style={{ fontSize: '18px' }}>Mensualidad</span>,
     icon: <DescriptionIcon sx={{ fontSize: 40 }} />, // Tamaño del icono ajustado
   },
-  {
-    segment: 'ruta',
-    title: <span style={{ fontSize: '18px' }}>Ruta</span>,
-    icon: <RouteIcon sx={{ fontSize: 40 }} />, // Tamaño del icono ajustado
-  },
+
   {
     segment: 'conductor',
     title: <span style={{ fontSize: '18px' }}>Conductores</span>,

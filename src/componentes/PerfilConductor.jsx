@@ -96,20 +96,31 @@ const PerfilConductor = () => {
     }
   };
 
-  const handleImageSelect = () => {
-    const url = prompt("Ingresa la URL de la imagen:");
-    if (url) {
-      setImageURL(url);
-      setConductor((prevState) => ({
-        ...prevState,
-        foto_usuario: url,
-      }));
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0]; // Obtener el archivo de la imagen
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Image = reader.result; // Base64 de la imagen
+        setConductor((prevState) => ({
+          ...prevState,
+          foto_usuario: base64Image, // Guardamos la imagen en base64 en el estado
+        }));
+      };
+      reader.readAsDataURL(file); // Convertimos la imagen a Base64
     }
   };
 
   return (
-    <Box sx={{ maxWidth: 900, margin: '0 auto', padding: 4, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
-      <Typography variant="h4" gutterBottom>Perfil del Conductor</Typography>
+    <Box sx={{ 
+      maxWidth: 600, 
+      margin: '0 auto', 
+      padding: 4, 
+      backgroundColor: '#121212', // Fondo oscuro
+      borderRadius: 2, 
+      color: 'white' // Texto blanco
+    }}>
+      <Typography variant="h4" gutterBottom>Perfil del Usuario</Typography>
 
       <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: 3 }}>
         {conductor.foto_usuario && (
@@ -128,9 +139,7 @@ const PerfilConductor = () => {
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: 3 }}>
-        <Button variant="outlined" color="primary" onClick={handleImageSelect}>
-          Seleccionar Foto
-        </Button>
+        <input type="file" accept="image/*" onChange={handleImageSelect} />
       </Box>
 
       <Typography variant="h6" gutterBottom>Datos del Conductor</Typography>
@@ -143,6 +152,7 @@ const PerfilConductor = () => {
             value={conductor.rut_usuario || ''}
             required
             disabled
+            sx={{ backgroundColor: '#333', color: 'white' }}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -154,6 +164,7 @@ const PerfilConductor = () => {
             onChange={manejarCambio}
             required
             disabled={!isEditing}
+            sx={{ backgroundColor: '#333', color: 'white' }}
           />
         </Grid>
         <Grid item xs={12}>
@@ -165,6 +176,7 @@ const PerfilConductor = () => {
             onChange={manejarCambio}
             required
             disabled={!isEditing}
+            sx={{ backgroundColor: '#333', color: 'white' }}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -176,6 +188,7 @@ const PerfilConductor = () => {
             onChange={manejarCambio}
             required
             disabled={!isEditing}
+            sx={{ backgroundColor: '#333', color: 'white' }}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -186,6 +199,7 @@ const PerfilConductor = () => {
             value={conductor.correo_usuario || ''}
             required
             disabled
+            sx={{ backgroundColor: '#333', color: 'white' }}
           />
         </Grid>
         <Grid item xs={12}>
@@ -199,6 +213,7 @@ const PerfilConductor = () => {
             InputLabelProps={{ shrink: true }}
             required
             disabled={!isEditing}
+            sx={{ backgroundColor: '#333', color: 'white' }}
           />
         </Grid>
         <Grid item xs={12}>
@@ -212,6 +227,7 @@ const PerfilConductor = () => {
             InputLabelProps={{ shrink: true }}
             required
             disabled={!isEditing}
+            sx={{ backgroundColor: '#333', color: 'white' }}
           />
         </Grid>
         <Grid item xs={12}>
@@ -223,6 +239,7 @@ const PerfilConductor = () => {
             onChange={manejarCambio}
             required
             disabled={!isEditing}
+            sx={{ backgroundColor: '#333', color: 'white' }}
           />
         </Grid>
       </Grid>
@@ -232,7 +249,7 @@ const PerfilConductor = () => {
         {furgones.length > 0 ? (
           furgones.map((furgon) => (
             <Grid item xs={12} sm={6} key={furgon.matricula}>
-              <Box sx={{ padding: 2, borderRadius: 2, backgroundColor: '#fff', boxShadow: 1 }}>
+              <Box sx={{ padding: 2, borderRadius: 2, backgroundColor: '#333', boxShadow: 1 }}>
                 <Typography variant="body1"><strong>Año:</strong> {furgon.año}</Typography>
                 <Typography variant="body1"><strong>Marca:</strong> {furgon.marca}</Typography>
                 <Typography variant="body1"><strong>Modelo:</strong> {furgon.modelo}</Typography>
@@ -248,17 +265,12 @@ const PerfilConductor = () => {
       <Box mt={3} sx={{ display: 'flex', justifyContent: 'center' }}>
         {!isEditing ? (
           <Button variant="contained" color="primary" onClick={() => setIsEditing(true)}>
-            Editar Datos
+            Editar
           </Button>
         ) : (
-          <>
-            <Button variant="contained" color="primary" onClick={guardarDatos}>
-              Guardar
-            </Button>
-            <Button variant="outlined" color="secondary" onClick={() => setIsEditing(false)} sx={{ ml: 2 }}>
-              Cancelar
-            </Button>
-          </>
+          <Button variant="contained" color="primary" onClick={guardarDatos}>
+            Guardar Cambios
+          </Button>
         )}
       </Box>
     </Box>

@@ -26,27 +26,27 @@ const HorariosComponente = () => {
   }
 
   return (
-    <Box sx={{ padding: 2, backgroundColor: '#f5f5f5' }}>
-      <Typography variant="h4" gutterBottom color="primary">
+    <Box sx={{ padding: 2, backgroundColor: '#121212' }}>
+      <Typography variant="h4" gutterBottom color="#ffffff">
         Horarios de Furgón Escolar
       </Typography>
-      <TableContainer component={Paper} sx={{ maxWidth: '1000px', margin: '0 auto' }}>
+      <TableContainer component={Paper} sx={{ maxWidth: '1000px', margin: '0 auto', backgroundColor: '#1e1e1e' }}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#3f51b5', color: '#fff' }}>Fecha</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#3f51b5', color: '#fff' }}>Día</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#3f51b5', color: '#fff' }}>Hora Salida</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#3f51b5', color: '#fff' }}>Hora Regreso</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#3f51b5', color: '#ffffff' }}>Fecha</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#3f51b5', color: '#ffffff' }}>Día</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#3f51b5', color: '#ffffff' }}>Hora Salida</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', backgroundColor: '#3f51b5', color: '#ffffff' }}>Hora Regreso</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {itinerarios.map((itinerario, index) => (
-              <TableRow key={index} sx={{ '&:nth-of-type(odd)': { backgroundColor: '#e3f2fd' } }}>
-                <TableCell>{itinerario.fecha}</TableCell>
-                <TableCell>{itinerario.dia}</TableCell>
-                <TableCell>{itinerario.hora_salida}</TableCell>
-                <TableCell>{itinerario.hora_regreso}</TableCell>
+              <TableRow key={index} sx={{ '&:nth-of-type(odd)': { backgroundColor: '#1e88e5' }, color: '#ffffff' }}>
+                <TableCell sx={{ color: '#ffffff' }}>{itinerario.fecha}</TableCell>
+                <TableCell sx={{ color: '#ffffff' }}>{itinerario.dia}</TableCell>
+                <TableCell sx={{ color: '#ffffff' }}>{itinerario.hora_salida}</TableCell>
+                <TableCell sx={{ color: '#ffffff' }}>{itinerario.hora_regreso}</TableCell>
               </TableRow>
             ))}
           </TableBody>

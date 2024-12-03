@@ -18,12 +18,12 @@ const Perfil = () => {
     nombre_estudiante: '',
     fecha_nacimiento: '', // Ya existía aquí
     curso: '',
+    matricula: null, // Aseguramos que la matrícula sea nula
   });
 
   const [estudiantesList, setEstudiantesList] = useState([]); // Lista para mostrar estudiantes
   const [isEditing, setIsEditing] = useState(false);
   const [user, setUser] = useState(null);
-  const [imageURL, setImageURL] = useState('');
 
   useEffect(() => {
     const getUser = async () => {
@@ -100,7 +100,8 @@ const Perfil = () => {
 
       const estudianteConRut = {
         ...estudiante,
-        rut_usuario: usuario.rut_usuario,
+        rut_usuario: usuario.rut_usuario, // Asociar el estudiante al usuario, pero no al furgón
+        matricula: null, // Aquí aseguramos que la matrícula sea nula
       };
 
       const { error: estudianteError } = await supabase
@@ -117,14 +118,18 @@ const Perfil = () => {
     }
   };
 
-  const handleImageSelect = () => {
-    const url = prompt("Ingresa la URL de la imagen:");
-    if (url) {
-      setImageURL(url);
-      setUsuario((prevState) => ({
-        ...prevState,
-        foto_usuario: url,
-      }));
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0]; // Obtener el archivo de la imagen
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Image = reader.result; // Base64 de la imagen
+        setUsuario((prevState) => ({
+          ...prevState,
+          foto_usuario: base64Image, // Guardamos la imagen en base64 en el estado
+        }));
+      };
+      reader.readAsDataURL(file); // Convertimos la imagen a Base64
     }
   };
 
@@ -149,9 +154,7 @@ const Perfil = () => {
       </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: 3 }}>
-        <Button variant="outlined" color="primary" onClick={handleImageSelect}>
-          Seleccionar Foto
-        </Button>
+        <input type="file" accept="image/*" onChange={handleImageSelect} />
       </Box>
 
       <Typography variant="h6" gutterBottom>Datos del Tutor</Typography>
@@ -274,25 +277,24 @@ const Perfil = () => {
         </Grid>
       </Grid>
 
-      {isEditing && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: 3 }}>
-          <Button variant="contained" color="primary" onClick={guardarDatos}>
-            Guardar Cambios
-          </Button>
-        </Box>
-      )}
-
-      <Box sx={{ display: 'flex', justifyContent: 'center', marginTop: 3 }}>
-        <Button variant="outlined" color="primary" onClick={() => setIsEditing(!isEditing)}>
+      <Box sx={{ marginTop: 3 }}>
+        <Button variant="contained" onClick={() => setIsEditing(!isEditing)} sx={{ marginRight: 2 }}>
           {isEditing ? 'Cancelar' : 'Editar'}
         </Button>
+        {isEditing && (
+          <Button variant="contained" onClick={guardarDatos}>
+            Guardar
+          </Button>
+        )}
       </Box>
 
-      <Typography variant="h6" gutterBottom sx={{ marginTop: 3 }}>Estudiantes Asociados</Typography>
+      <Typography variant="h6" gutterBottom sx={{ marginTop: 3 }}>
+        Estudiantes Registrados:
+      </Typography>
       <List>
-        {estudiantesList.map((student) => (
-          <ListItem key={student.rut_estudiante}>
-            <ListItemText primary={`${student.nombre_estudiante} - ${student.curso}`} />
+        {estudiantesList.map((est, index) => (
+          <ListItem key={index}>
+            <ListItemText primary={`Nombre: ${est.nombre_estudiante}, Curso: ${est.curso}`} />
           </ListItem>
         ))}
       </List>

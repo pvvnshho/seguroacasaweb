@@ -11,8 +11,8 @@ import { useNavigate } from 'react-router-dom';
 import { IconButton } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp'; 
-import { supabase } from '../createClient'; 
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import { supabase } from '../createClient';
 import PerfilConductor from '../componentes/PerfilConductor';
 
 function PerfilConductorPage(props) {
@@ -37,13 +37,15 @@ function PerfilConductorPage(props) {
     }
   };
 
+  
+
   return (
     <ThemeProvider theme={theme}>
       <AppProvider
         navigation={[
           {
             segment: 'perfilConductor',
-            title: <span style={{ fontSize: '18px' }}>Perfil Conductor</span>,
+            title: <span style={{ fontSize: '18px', color: 'white' }}>Perfil Conductor</span>,
             icon: <AccountCircleIcon sx={{ fontSize: 40 }} />,
             onClick: () => navigate('/perfilConductor'),
           },
@@ -71,7 +73,7 @@ function PerfilConductorPage(props) {
               <ExitToAppIcon sx={{ fontSize: 40 }} />
             </IconButton>
           </Box>
-          {/* Componente de perfil con texto en color negro */}
+          {/* Componente de perfil con textos específicos en blanco */}
           <Box
             sx={{
               py: 4,
@@ -81,17 +83,17 @@ function PerfilConductorPage(props) {
               textAlign: 'center',
               flex: 1,
               '& input, & textarea, & select': {
-                color: 'inherit', // Hereda color del tema
-                backgroundColor: 'inherit', // Fondo según tema
+                color: 'inherit',
+                backgroundColor: 'inherit',
               },
               '& label': {
-                color: 'inherit', // Color dinámico para etiquetas
+                color: 'inherit',
               },
               '& .MuiFormControl-root': {
-                backgroundColor: 'inherit', // Fondo para formularios
+                backgroundColor: 'inherit',
               },
-              '& .MuiTypography-root': {
-                color: '#000000', // Asegura que el texto dentro de PerfilConductor siempre sea negro
+              '& .MuiTypography-root:contains("Perfil del Conductor"), & .MuiTypography-root:contains("Datos del Conductor")': {
+                color: 'white',
               },
             }}
           >

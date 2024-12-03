@@ -1,111 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../createClient'; // Asegúrate de que la ruta esté correcta
-import { TextField, Button, Box, Typography, Grid, IconButton } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
+import { Box, Typography, Grid, IconButton, Dialog, DialogActions, DialogContent, DialogTitle, Button } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 const FurgonesComponente = () => {
-  const [matricula, setMatricula] = useState('');
-  const [marca, setMarca] = useState('');
-  const [modelo, setModelo] = useState('');
-  const [año, setAño] = useState('');
-  const [imagen, setImagen] = useState(null); // Estado para la imagen
   const [furgones, setFurgones] = useState([]);
-  const [editMode, setEditMode] = useState(false);
-  const [currentFurgon, setCurrentFurgon] = useState(null);
-  const [showForm, setShowForm] = useState(false); // Estado para controlar la visibilidad del formulario
+  const [openDialog, setOpenDialog] = useState(false); // Controla el diálogo de confirmación
+  const [furgonToDelete, setFurgonToDelete] = useState(null); // Guarda el furgón seleccionado para eliminar
+  const [estudiantesAsociados, setEstudiantesAsociados] = useState([]); // Para almacenar estudiantes asociados a un furgón
+  const [openEstudiantesDialog, setOpenEstudiantesDialog] = useState(false); // Controla el diálogo de estudiantes
 
-  // Función para obtener los furgones
   const fetchFurgones = async () => {
     const { data: furgonesData, error: furgonesError } = await supabase
       .from('furgones')
-      .select('*');
-
-    if (furgonesError) {
-      alert('Error al obtener los furgones: ' + furgonesError.message);
-      return;
-    }
+      .select(`
+        matricula,
+        marca,
+        modelo,
+        año,
+        foto_furgon,
+        nombre_auxiliar,
+        rut_auxiliar,
+        telefono_auxiliar,
+        foto_auxiliar,
+        capacidad,
+        usuarios (
+          rut_usuario,
+          nombre_usuario,
+          direccion,
+          telefono,
+          correo_usuario,
+          foto_usuario,
+          tipo_usuario,
+          fecha_vencimiento,
+          cod_licencia,
+          fecha_nacimiento
+        )
+      `);
 
     setFurgones(furgonesData);
+  };
+
+  const fetchEstudiantes = async (matricula) => {
+    const { data: estudiantesData, error: estudiantesError } = await supabase
+      .from('estudiantes')
+      .select('rut_estudiante, nombre_estudiante')
+      .eq('matricula', matricula); // Filtra por matrícula del furgón
+
+    setEstudiantesAsociados(estudiantesData);
+    setOpenEstudiantesDialog(true); // Abre el diálogo con los estudiantes
   };
 
   useEffect(() => {
     fetchFurgones();
   }, []);
 
-  // Función para subir la imagen a Supabase y obtener la URL
-  const uploadImage = async (imageFile) => {
-    const fileName = `${Date.now()}-${imageFile.name}`; // Nombre único para el archivo
-    const { data, error } = await supabase.storage
-      .from('furgon-images') // Asegúrate de tener un bucket en Supabase llamado 'furgon-images'
-      .upload(fileName, imageFile);
-
-    if (error) {
-      alert('Error al subir la imagen: ' + error.message);
-      return null;
-    }
-
-    const imageUrl = `${supabase.storage.from('furgon-images').getPublicUrl(fileName).publicURL}`;
-    return imageUrl; // Devuelve la URL de la imagen
-  };
-
-  const handleRegisterFurgon = async () => {
-    if (editMode) {
-      const { error } = await supabase
-        .from('furgones')
-        .update({ matricula, marca, modelo, año, foto_furgon: imagen }) // Cambié 'imagen' por 'foto_furgon'
-        .eq('matricula', currentFurgon.matricula);  // Usamos "matricula" en lugar de "id"
-
-      if (error) {
-        alert('Error al actualizar el furgón: ' + error.message);
-      } else {
-        alert('Furgón actualizado exitosamente');
-        setEditMode(false);
-        setCurrentFurgon(null);
-        fetchFurgones(); // Recarga los datos
-      }
-    } else {
-      const uploadedImageUrl = imagen ? await uploadImage(imagen) : null;
-
-      const { error } = await supabase
-        .from('furgones')
-        .insert([{
-          matricula,
-          marca,
-          modelo,
-          año,
-          foto_furgon: uploadedImageUrl, // Guarda la URL de la imagen si se subió
-        }]);
-
-      if (error) {
-        alert('Error al registrar el furgón: ' + error.message);
-      } else {
-        alert('Furgón registrado exitosamente');
-        setMatricula('');
-        setMarca('');
-        setModelo('');
-        setAño('');
-        setImagen(null); // Resetea la imagen
-        fetchFurgones(); // Recarga los datos
-      }
-    }
-  };
-
-  const handleEditFurgon = (furgon) => {
-    setMatricula(furgon.matricula);
-    setMarca(furgon.marca);
-    setModelo(furgon.modelo);
-    setAño(furgon.año);
-    setImagen(furgon.foto_furgon); // Setea la imagen del furgón en modo edición
-    setCurrentFurgon(furgon);
-    setEditMode(true);
-  };
-
-  const handleDeleteFurgon = async (matricula) => {  // Usamos "matricula" en lugar de "id"
+  const handleDeleteFurgon = async () => {
     const { error } = await supabase
       .from('furgones')
       .delete()
-      .eq('matricula', matricula);  // Usamos "matricula" en lugar de "id"
+      .eq('matricula', furgonToDelete.matricula);
 
     if (error) {
       alert('Error al eliminar el furgón: ' + error.message);
@@ -113,6 +67,20 @@ const FurgonesComponente = () => {
       alert('Furgón eliminado exitosamente');
       fetchFurgones(); // Recarga los datos
     }
+    setOpenDialog(false); // Cierra el diálogo después de eliminar
+  };
+
+  const openDeleteDialog = (furgon) => {
+    setFurgonToDelete(furgon); // Guarda el furgón seleccionado
+    setOpenDialog(true); // Abre el diálogo de confirmación
+  };
+
+  const closeDeleteDialog = () => {
+    setOpenDialog(false); // Cierra el diálogo sin eliminar
+  };
+
+  const closeEstudiantesDialog = () => {
+    setOpenEstudiantesDialog(false); // Cierra el diálogo de estudiantes
   };
 
   return (
@@ -121,119 +89,128 @@ const FurgonesComponente = () => {
         Furgones
       </Typography>
 
-      {/* Botón para mostrar el formulario */}
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={() => setShowForm(!showForm)}
-        sx={{ marginBottom: 4 }}
-      >
-        {showForm ? 'Cancelar' : 'Agregar Furgón'}
-      </Button>
-
-      {/* Formulario de registro, solo visible si showForm es true */}
-      {showForm && (
-        <Box sx={{ marginBottom: 4 }}>
-          <Typography variant="h6">{editMode ? 'Editar Furgón' : 'Registrar Furgón'}</Typography>
-          <TextField
-            label="Matrícula"
-            variant="outlined"
-            fullWidth
-            value={matricula}
-            onChange={(e) => setMatricula(e.target.value)}
-            sx={{ marginBottom: 2 }}
-          />
-          <TextField
-            label="Marca"
-            variant="outlined"
-            fullWidth
-            value={marca}
-            onChange={(e) => setMarca(e.target.value)}
-            sx={{ marginBottom: 2 }}
-          />
-          <TextField
-            label="Modelo"
-            variant="outlined"
-            fullWidth
-            value={modelo}
-            onChange={(e) => setModelo(e.target.value)}
-            sx={{ marginBottom: 2 }}
-          />
-          <TextField
-            label="Año"
-            variant="outlined"
-            fullWidth
-            value={año}
-            onChange={(e) => setAño(e.target.value)}
-            sx={{ marginBottom: 2 }}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            component="label"
-            sx={{ marginBottom: 2 }}
-          >
-            Subir Imagen
-            <input
-              type="file"
-              hidden
-              onChange={(e) => setImagen(e.target.files[0])}
-            />
-          </Button>
-
-          {imagen && (
-            <Typography variant="body2" sx={{ marginBottom: 2 }}>
-              Imagen seleccionada: {imagen.name}
-            </Typography>
-          )}
-
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleRegisterFurgon}
-          >
-            {editMode ? 'Actualizar Furgón' : 'Registrar Furgón'}
-          </Button>
-        </Box>
-      )}
-
       <Typography variant="h6" gutterBottom>
         Lista de Furgones
       </Typography>
       <Grid container spacing={2}>
         {furgones.map((furgon) => (
-          <Grid item xs={12} sm={6} md={4} key={furgon.matricula}>  {/* Usamos "matricula" como clave */}
+          <Grid item xs={12} sm={6} md={4} key={furgon.matricula}>
             <Box
               sx={{
+                position: 'relative',
                 border: '1px solid #ccc',
                 borderRadius: 2,
-                padding: 2,
+                overflow: 'hidden',
                 textAlign: 'center',
-                position: 'relative',
+                height: 300,
                 backgroundImage: furgon.foto_furgon ? `url(${furgon.foto_furgon})` : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                height: 200,
               }}
             >
-              <Box sx={{ position: 'relative', zIndex: 2 }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  zIndex: 1,
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'relative',
+                  zIndex: 2,
+                  color: 'white',
+                  padding: 2,
+                }}
+              >
                 <Typography variant="body1"><strong>Matrícula:</strong> {furgon.matricula}</Typography>
                 <Typography variant="body1"><strong>Marca:</strong> {furgon.marca}</Typography>
-                <Typography variant="body1"><strong>Modelo:</strong> {furgon.modelo} - <strong>Año:</strong> {furgon.año}</Typography>
-
-                <Box sx={{ marginTop: 2 }}>
-                  <IconButton onClick={() => handleEditFurgon(furgon)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDeleteFurgon(furgon.matricula)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
+                <Typography variant="body1"><strong>Modelo:</strong> {furgon.modelo}</Typography>
+                <Typography variant="body1"><strong>Año:</strong> {furgon.año}</Typography>
+                <Typography variant="body1"><strong>Capacidad:</strong> {furgon.capacidad}</Typography>
+                <Typography variant="body1" sx={{ mt: 2 }}><strong>Conductor Asociado:</strong></Typography>
+                {furgon.usuarios && (
+                  <>
+                    <Typography variant="body1"><strong>Nombre:</strong> {furgon.usuarios.nombre_usuario}</Typography>
+                    <Typography variant="body1"><strong>RUT:</strong> {furgon.usuarios.rut_usuario}</Typography>
+                    <Typography variant="body1"><strong>Correo:</strong> {furgon.usuarios.correo_usuario}</Typography>
+                    <Typography variant="body1"><strong>Teléfono:</strong> {furgon.usuarios.telefono}</Typography>
+                  </>
+                )}
               </Box>
+            </Box>
+            {/* Botón para eliminar furgón */}
+            <Box sx={{ marginTop: 2, textAlign: 'center' }}>
+              <IconButton
+                onClick={() => openDeleteDialog(furgon)}
+                sx={{
+                  color: 'red',
+                  border: '1px solid red',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                  },
+                }}
+              >
+                <DeleteIcon />
+              </IconButton>
+              {/* Botón para mostrar estudiantes asociados */}
+              <Button
+                variant="contained"
+                onClick={() => fetchEstudiantes(furgon.matricula)}
+                sx={{ marginLeft: 2 }}
+              >
+                Ver Estudiantes
+              </Button>
             </Box>
           </Grid>
         ))}
       </Grid>
+
+      {/* Diálogo de confirmación para eliminar el furgón */}
+      <Dialog open={openDialog} onClose={closeDeleteDialog}>
+        <DialogTitle>Confirmación</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            ¿Estás seguro de que deseas eliminar el furgón con matrícula <strong>{furgonToDelete?.matricula}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDeleteDialog} color="primary">
+            Cancelar
+          </Button>
+          <Button onClick={handleDeleteFurgon} color="secondary">
+            Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo para mostrar los estudiantes asociados */}
+      <Dialog open={openEstudiantesDialog} onClose={closeEstudiantesDialog}>
+        <DialogTitle>Estudiantes Asociados</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            <strong>Estudiantes:</strong>
+          </Typography>
+          {estudiantesAsociados.length > 0 ? (
+            estudiantesAsociados.map((estudiante) => (
+              <Typography key={estudiante.rut_estudiante}>
+                {estudiante.nombre_estudiante} (RUT: {estudiante.rut_estudiante})
+              </Typography>
+            ))
+          ) : (
+            <Typography variant="body2">No hay estudiantes asociados a este furgón.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeEstudiantesDialog} color="primary">
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

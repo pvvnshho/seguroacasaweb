@@ -212,18 +212,7 @@ const LoginComprobacion = () => {
               style={styles.input}
             />
           </div>
-
-          <div>
-            <label>Foto</label>
-            <input
-              type="text"
-              placeholder="Foto (URL)"
-              value={foto}
-              onChange={(e) => setFoto(e.target.value)}
-              style={styles.input}
-            />
-          </div>
-
+                   
           <div>
             <label>Fecha de nacimiento</label>
             <input

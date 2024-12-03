@@ -12,9 +12,12 @@ import FacebookIcon from '@mui/icons-material/Facebook';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import InstagramIcon from '@mui/icons-material/Instagram';
 
+// Importa la imagen del furgón desde tu carpeta local
+import furgonImg from '../assets/fondo2.jpg'; // Asegúrate de que la imagen esté en la ruta correcta
+
 const cardData = [
   {
-    img: 'https://praesidiumchile.cl/wp-content/uploads/2023/03/una-furgoneta-amarilla-de-la-escuela.jpg_s1024x1024wisk20cczyKal9y_d-eEucJzWBSd1sz2FfrVFp1wupZOpwZGrA.jpg',
+    img: furgonImg, // Usa la imagen importada desde el PC
     tag: 'Transporte Seguro',
     title: 'Furgones Escolares',
     description: 'Furgones equipados con GPS para un seguimiento seguro.',
@@ -52,7 +55,7 @@ const HomeComponente = () => {
               <CardMedia
                 component="img"
                 alt={card.title}
-                image={card.img}
+                image={card.img} // La imagen se mostrará aquí, ya sea desde el PC o URL
                 sx={{ objectFit: 'cover', height: '100%' }} // Ajuste automático de la imagen
               />
               <Box sx={{ padding: 2 }}>
@@ -67,13 +70,7 @@ const HomeComponente = () => {
           </Grid>
         ))}
       </Grid>
-      <Box sx={{ marginTop: 4, border: '1px solid #ccc', padding: 2 }}>
-        <Typography variant="h6">Ubicación en el Mapa</Typography>
-        <Box sx={{ height: 300, backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <MapIcon sx={{ fontSize: 60, color: '#888' }} />
-          <Typography variant="body2" color="text.secondary">Aquí va el mapa</Typography>
-        </Box>
-      </Box>
+
       <Box sx={{ marginTop: 4 }}>
         <Typography variant="h6">Redes Sociales</Typography>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', marginTop: 1 }}>
